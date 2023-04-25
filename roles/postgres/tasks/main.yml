@@ -1,0 +1,57 @@
+---
+
+- name: install postgressql
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - postgresql
+    - postgresql-contrib
+
+- name: config edits
+  lineinfile:
+    path: /etc/postgresql/13/main/postgresql.conf
+    regexp: '^#listen_a'
+    line: "listen_addresses = '*'"
+
+- name: config edits2
+  lineinfile:
+    path: /etc/postgresql/13/main/pg_hba.conf
+    regexp: '^host    all             all             127.0.0.1/32            md5'
+    line: "host    all             all             {{ pgsql_subnet }}         md5" 
+
+- name: config edits3
+  lineinfile:
+    path: /etc/postgresql/13/main/pg_hba.conf
+    regexp: '^local   all             postgres                                peer'
+    line: "#local all postgres peer" 
+
+- name: Check if pg ansible tmp directory is alreasy exist
+  stat:
+    path: /var/lib/postgresql/.ansible/tmp
+  register: pga_dir
+
+- name: Create a tmp directory (if not exist yet)
+  file:
+    path: /var/lib/postgresql/.ansible/tmp
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+  when: not pga_dir.stat.exists
+
+- name: Create new postgres user
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: "{{ pgsql_user_login }}"
+    password: "{{ pgsql_user_pass }}"
+    role_attr_flags: CREATEDB,SUPERUSER,CREATEROLE
+    encrypted: yes
+    state: present
+
+- name: restart postgres service again
+  systemd:
+    name: postgresql
+    state: restarted
+    enabled: yes

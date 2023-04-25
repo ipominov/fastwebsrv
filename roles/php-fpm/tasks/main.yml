@@ -1,0 +1,32 @@
+---
+
+- name: Install PHP-FPM and modules
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - php-fpm
+    - php-cli
+    - php-mysqli
+    - php-gd
+    - php-odbc
+    - php-pear
+    - php-mbstring
+    - php-soap
+    - php-zip
+    - php-pgsql
+
+- name: Check if index file alreasy exist
+  stat:
+    path: /etc/php-fpm.d/www.conf
+  register: phpconf
+
+- name: Replace php-fpm config file
+  copy: src=files/www.conf dest=/etc/php-fpm.d/
+  when: not phpconf.stat.exists
+
+- name: Start php-fpm service
+  systemd:
+    name: php7.4-fpm
+    state: restarted
+    enabled: yes

@@ -1,0 +1,45 @@
+---
+
+- name: Install nginx stable
+  apt:
+    name: nginx
+    state: present
+
+- name: Replace nginx config file
+  template:
+    src: files/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+
+- name: Check if Wp directory is alreasy exist
+  stat:
+    path: /web/public_html
+  register: wp_dir
+
+- name: Create a site directory (if not exist yet)
+  file:
+    path: /web/public_html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  when: not wp_dir.stat.exists
+
+- name: Check if index file alreasy exist
+  stat:
+    path: /web/public_html/index.php
+  register: index_file
+
+- name: Copy index file
+  copy:
+    src: files/index.php
+    dest: /web/public_html/index.php
+    owner: www-data
+    group: www-data
+    mode: '0644'
+  when: not wp_dir.stat.exists
+
+- name: restart nginx service
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes

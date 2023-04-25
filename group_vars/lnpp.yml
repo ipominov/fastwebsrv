@@ -1,0 +1,7 @@
+---
+
+mysql_root_password: " "
+
+pgsql_user_login: " "
+pgsql_user_pass:  " "
+pgsql_subnet:     " "

@@ -1,0 +1,40 @@
+---
+
+- name: Install Mariadb server
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - mariadb-server
+    - mariadb-client
+      
+- name: Install pymysql python module via pip
+  pip:
+    name: pymysql
+    state: present
+ 
+- name: Start mariadb service
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+  
+- name: Check if mysql root password is already set
+  shell: >
+    mysqladmin -u root status
+  changed_when: false
+  failed_when: false
+  register: root_pwd_check
+
+- name: If Mysql root password is no set yet, do it
+  mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    host: "{{ item }}"
+    login_unix_socket: "/run/mysqld/mysqld.sock"
+    state: present
+  with_items:
+    - ::1
+    - 127.0.0.1
+    - localhost
+  when: root_pwd_check.rc == 0
