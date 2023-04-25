@@ -1,22 +1,22 @@
 ---
 
-- hosts: lnpp
+- hosts: web
 
   roles:
     - role: prepare
-      tags: 
+      tags:
         - always
     - role: nginx
-      tags: 
+      tags:
         - always
     - role: php-fpm
-      tags: 
+      tags:
         - always
     - role: postgres
-      tags: 
+      tags:
         - never
         - postgres
     - role: mysql
-      tags: 
+      tags:
         - never
         - mysql
